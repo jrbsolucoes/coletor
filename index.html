@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Coletor de Estoque JRB Hiper</title>
+  <!-- Biblioteca HTML5-QRCode para leitura de código de barras via câmera -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    :root {
+      --primary: #f59e0b;
+      --primary-dark: #d97706;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 12px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    header h1 {
+      font-size: 1.15rem;
+      color: var(--primary);
+    }
+
+    header span {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      background: #0284c7;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .col {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0b1120;
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 600;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #0f172a;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-cam {
+      background: #3b82f6;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #052e16;
+      flex: 1;
+    }
+
+    .btn-secondary {
+      background: #475569;
+      color: #fff;
+      flex: 1;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+
+    #reader-container {
+      display: none;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid var(--primary);
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    .product-preview {
+      background: #0b1120;
+      border-left: 4px solid var(--primary);
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-size: 0.88rem;
+      display: none;
+    }
+
+    .product-preview strong {
+      color: var(--primary);
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .search-results {
+      max-height: 180px;
+      overflow-y: auto;
+      background: #0b1120;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    .search-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    .search-item:hover {
+      background: #1e293b;
+    }
+
+    .options-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .qty-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .file-input {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div>
+      <h1>🔩 Coletor de Estoque JRB Hiper</h1>
+      <span id="catalog-status">Catálogo offline: não carregado (opcional)</span>
+    </div>
+    <div class="badge" id="total-skus">0 itens</div>
+  </header>
+
+  <!-- Carga opcional do 02_Produtos.csv para exibir nome e unidade na hora da contagem -->
+  <div class="card" style="padding: 10px 16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <span style="font-size:0.82rem; color:var(--muted);">Quer ver o nome do produto ao digitar o código?</span>
+      <button class="btn-secondary" style="flex:0; padding:6px 12px; font-size:0.8rem; white-space:nowrap;"
+        onclick="document.getElementById('csvCatalogInput').click()">
+        📂 Carregar 02_Produtos.csv
+      </button>
+      <input type="file" id="csvCatalogInput" class="file-input" accept=".csv" onchange="loadProductCatalog(event)">
+    </div>
+  </div>
+
+  <!-- Área de Leitura e Entrada -->
+  <div class="card">
+    <div id="reader-container">
+      <div id="reader"></div>
+      <button class="btn-danger" style="width:100%; border-radius:0;" onclick="stopScanner()">✖ Fechar Câmera</button>
+    </div>
+
+    <div class="row">
+      <div class="col" style="flex: 2;">
+        <label for="codigoInput">Código / Código de Barras (ou nome)</label>
+        <input type="text" id="codigoInput" placeholder="Ex: 45841 ou bipe aqui" autocomplete="off" autofocus>
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button type="button" class="btn-cam" onclick="toggleScanner()" title="Ler com a Câmera">
+          📷 Câmera
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista de sugestões quando busca por nome -->
+    <div id="searchResults" class="search-results"></div>
+
+    <!-- Preview do Produto quando o catálogo está carregado -->
+    <div id="productPreview" class="product-preview">
+      <strong id="prevName"></strong>
+      <span id="prevDetails"></span>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label for="qtdInput">Quantidade Contada</label>
+        <input type="number" id="qtdInput" step="0.001" min="0.001" value="1" placeholder="Ex: 100">
+      </div>
+      <div class="col" style="display:flex; align-items:flex-end;">
+        <button type="button" class="btn-primary" onclick="registrarItem()">
+          ➕ Registrar (Enter)
+        </button>
+      </div>
+    </div>
+
+    <div class="options-bar">
+      <label class="checkbox-label">
+        <input type="checkbox" id="somarDuplicados" checked>
+        Somar quantidade se o código já foi bipado
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="autoEnterScanner">
+        Salvar direto ao ler na câmera (Qtd = 1)
+      </label>
+    </div>
+  </div>
+
+  <!-- Exportação -->
+  <div class="card">
+    <div class="card-title">
+      <span>EXPORTAR PARA O HIPER GESTÃO</span>
+      <span id="total-pecas">Total: 0,000 un</span>
+    </div>
+    <div class="row" style="margin-bottom:0;">
+      <button class="btn-success" onclick="exportarCSVHiper()">
+        ⬇️ CSV Padrão Hiper (Estoque)
+      </button>
+      <button class="btn-secondary" onclick="exportarCSVAuditoria()">
+        📊 CSV Completo (Excel)
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de Itens Coletados -->
+  <div class="card">
+    <div class="card-title">
+      <span>ITENS REGISTRADOS NESTA SESSÃO</span>
+      <button class="btn-danger" onclick="limparTudo()">🗑️ Limpar Tudo</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descrição / Unid.</th>
+            <th>Qtd</th>
+            <th style="text-align:right;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaItens"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Estado da aplicação
+    let itensColetados = JSON.parse(localStorage.getItem('hiper_coletor_itens') || '[]');
+    let catalogoProdutos = {}; // codigo -> { nome, unidade, preco }
+    let html5QrCode = null;
+    let scannerAtivo = false;
+
+    const codigoInput = document.getElementById('codigoInput');
+    const qtdInput = document.getElementById('qtdInput');
+    const productPreview = document.getElementById('productPreview');
+    const searchResults = document.getElementById('searchResults');
+
+    // Som de Bip usando Web Audio API (não precisa de arquivo externo)
+    function playBeep(freq = 880, duration = 90) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); ctx.close(); }, duration);
+      } catch (e) { }
+      if (navigator.vibrate) navigator.vibrate(80);
+    }
+
+    // Carregar 02_Produtos.csv para consulta de nomes e unidades
+    function loadProductCatalog(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/);
+        if (lines.length < 2) return;
+
+        const sep = lines[0].includes(';') ? ';' : ',';
+        const headers = lines[0].replace(/^\uFEFF/, '').split(sep).map(h => h.trim().toLowerCase());
+
+        const idxCod = headers.indexOf('codigo_produto');
+        const idxBar = headers.indexOf('codigo_de_barras');
+        const idxNome = headers.indexOf('nome');
+        const idxUnd = headers.indexOf('sigla_da_unidade_de_medida');
+        const idxPreco = headers.indexOf('preco_venda');
+
+        catalogoProdutos = {};
+        let count = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          const cols = lines[i].split(sep);
+          const cod = (cols[idxCod] || '').trim();
+          const bar = (cols[idxBar] || cod).trim();
+          const nome = (cols[idxNome] || '').trim();
+          const und = (cols[idxUnd] || 'UN').trim();
+          const preco = (cols[idxPreco] || '').trim();
+
+          if (cod || bar) {
+            const info = { codigo: bar || cod, nome, und, preco };
+            if (cod) catalogoProdutos[cod] = info;
+            if (bar) catalogoProdutos[bar] = info;
+            count++;
+          }
+        }
+        document.getElementById('catalog-status').textContent = `✅ Catálogo ativo: ${count} produtos carregados`;
+        document.getElementById('catalog-status').style.color = '#34d399';
+        atualizarPreview();
+        renderizarTabela();
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    // Mostrar preview ou busca por nome ao digitar
+    codigoInput.addEventListener('input', atualizarPreview);
+
+    function atualizarPreview() {
+      const val = codigoInput.value.trim();
+      searchResults.style.display = 'none';
+
+      if (!val) {
+        productPreview.style.display = 'none';
+        return;
+      }
+
+      // Se encontrou código exato
+      if (catalogoProdutos[val]) {
+        const p = catalogoProdutos[val];
+        document.getElementById('prevName').textContent = p.nome;
+        document.getElementById('prevDetails').textContent = `Unidade: ${p.und} | Preço: R$ ${p.preco}`;
+        productPreview.style.display = 'block';
+        return;
+      }
+
+      productPreview.style.display = 'none';
+
+      // Se digitou texto (busca por nome do parafuso/ferramenta)
+      if (isNaN(val) && val.length >= 3 && Object.keys(catalogoProdutos).length > 0) {
+        const termo = val.toUpperCase();
+        const matches = Object.values(catalogoProdutos)
+          .filter(p => p.nome.toUpperCase().includes(termo))
+          .slice(0, 15);
+
+        if (matches.length > 0) {
+          searchResults.innerHTML = matches.map(p => `
+            <div class="search-item" onclick="selecionarProdutoBusca('${p.codigo}')">
+              <span><strong>[${p.codigo}]</strong> ${p.nome}</span>
+              <span style="color:var(--primary)">${p.und}</span>
+            </div>
+          `).join('');
+          searchResults.style.display = 'block';
+        }
+      }
+    }
+
+    function selecionarProdutoBusca(codigo) {
+      codigoInput.value = codigo;
+      searchResults.style.display = 'none';
+      atualizarPreview();
+      qtdInput.focus();
+      qtdInput.select();
+    }
+
+    // Atalhos de teclado (Enter no código pula pra quantidade; Enter na quantidade salva)
+    codigoInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (document.getElementById('autoEnterScanner').checked) {
+          registrarItem();
+        } else {
+          qtdInput.focus();
+          qtdInput.select();
+        }
+      }
+    });
+
+    qtdInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        registrarItem();
+      }
+    });
+
+    // Registrar item na lista
+    function registrarItem() {
+      const codigo = codigoInput.value.trim();
+      const qtd = parseFloat(String(qtdInput.value).replace(',', '.'));
+
+      if (!codigo) {
+        alert('Informe ou bipe o código do produto.');
+        codigoInput.focus();
+        return;
+      }
+      if (isNaN(qtd) || qtd <= 0) {
+        alert('Informe uma quantidade válida maior que zero.');
+        qtdInput.focus();
+        return;
+      }
+
+      const somar = document.getElementById('somarDuplicados').checked;
+      const existenteIdx = itensColetados.findIndex(item => item.codigo === codigo);
+      const infoCat = catalogoProdutos[codigo] || null;
+
+      if (somar && existenteIdx > -1) {
+        itensColetados[existenteIdx].quantidade = +(itensColetados[existenteIdx].quantidade + qtd).toFixed(3);
+        itensColetados[existenteIdx].timestamp = new Date().toLocaleTimeString('pt-BR');
+        // Move para o topo da lista
+        const atualizado = itensColetados.splice(existenteIdx, 1)[0];
+        itensColetados.unshift(atualizado);
+      } else {
+        itensColetados.unshift({
+          id: Date.now() + Math.random(),
+          codigo: codigo,
+          nome: infoCat ? infoCat.nome : 'Sem catálogo carregado',
+          unidade: infoCat ? infoCat.und : 'UN',
+          quantidade: +qtd.toFixed(3),
+          timestamp: new Date().toLocaleTimeString('pt-BR')
+        });
+      }
+
+      playBeep(920, 80);
+      salvarLocalStorage();
+      renderizarTabela();
+
+      // Resetar campos para o próximo bip
+      codigoInput.value = '';
+      qtdInput.value = '1';
+      productPreview.style.display = 'none';
+      searchResults.style.display = 'none';
+      codigoInput.focus();
+    }
+
+    function removerItem(index) {
+      if (confirm(`Remover o item [${itensColetados[index].codigo}] da contagem?`)) {
+        itensColetados.splice(index, 1);
+        salvarLocalStorage();
+        renderizarTabela();
+      }
+    }
+
+    function editarQuantidade(index) {
+      const atual = itensColetados[index];
+      const nova = prompt(`Nova quantidade para [${atual.codigo}] ${atual.nome}:`, atual.quantidade);
+      if (nova !== null) {
+        const num = parseFloat(nova.replace(',', '.'));
+        if (!isNaN(num) && num > 0) {
+          itensColetados[index].quantidade = +num.toFixed(3);
+          salvarLocalStorage();
+          renderizarTabela();
+        }
+      }
+    }
+
+    function limparTudo() {
+      if (itensColetados.length === 0) return;
+      if (confirm('Tem certeza que deseja APAGAR todos os itens contados nesta sessão?')) {
+        itensColetados = [];
+        salvarLocalStorage();
+        renderizarTabela();
+      }
+    }
+
+    function salvarLocalStorage() {
+      localStorage.setItem('hiper_coletor_itens', JSON.stringify(itensColetados));
+    }
+
+    function formatarQtdHiper(num) {
+      return Number(num).toFixed(3).replace('.', ',');
+    }
+
+    function renderizarTabela() {
+      const tbody = document.getElementById('tabelaItens');
+      document.getElementById('total-skus').textContent = `${itensColetados.length} itens`;
+
+      const somaTotal = itensColetados.reduce((acc, i) => acc + i.quantidade, 0);
+      document.getElementById('total-pecas').textContent = `Total: ${formatarQtdHiper(somaTotal)} un`;
+
+      if (itensColetados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="empty-state">Nenhum item coletado ainda. Digite ou bipe o primeiro código acima.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = itensColetados.map((item, idx) => {
+        const infoCat = catalogoProdutos[item.codigo];
+        const nomeExibicao = infoCat ? infoCat.nome : item.nome;
+        const undExibicao = infoCat ? infoCat.und : item.unidade;
+
+        return `
+          <tr>
+            <td><strong>${item.codigo}</strong><br><small style="color:var(--muted)">${item.timestamp}</small></td>
+            <td>${nomeExibicao} <span style="color:var(--primary); font-size:0.75rem;">(${undExibicao})</span></td>
+            <td onclick="editarQuantidade(${idx})" style="cursor:pointer;" title="Clique para editar">
+              <span class="qty-badge">${formatarQtdHiper(item.quantidade)}</span>
+            </td>
+            <td style="text-align:right;">
+              <button class="btn-danger" onclick="removerItem(${idx})">✕</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Leitor de Câmera (HTML5-QRCode)
+    function toggleScanner() {
+      if (scannerAtivo) {
+        stopScanner();
+      } else {
+        startScanner();
+      }
+    }
+
+    function startScanner() {
+      const container = document.getElementById('reader-container');
+      container.style.display = 'block';
+      html5QrCode = new Html5Qrcode("reader");
+      scannerAtivo = true;
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 260, height: 120 } },
+        (decodedText) => {
+          playBeep(1200, 100);
+          codigoInput.value = decodedText.trim();
+          atualizarPreview();
+
+          if (document.getElementById('autoEnterScanner').checked) {
+            registrarItem();
+          } else {
+            stopScanner();
+            qtdInput.focus();
+            qtdInput.select();
+          }
+        },
+        () => { }
+      ).catch(err => {
+        alert("Não foi possível acessar a câmera. Verifique as permissões do navegador (requer HTTPS ou localhost).");
+        container.style.display = 'none';
+        scannerAtivo = false;
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrCode && scannerAtivo) {
+        html5QrCode.stop().then(() => {
+          html5QrCode.clear();
+          document.getElementById('reader-container').style.display = 'none';
+          scannerAtivo = false;
+        });
+      } else {
+        document.getElementById('reader-container').style.display = 'none';
+        scannerAtivo = false;
+      }
+    }
+
+    // Exportação 1: Formato nativo de Importação de Estoque do Hiper (<codigo>;<quantidade> sem cabeçalho)
+    function exportarCSVHiper() {
+      if (itensColetados.length === 0) {
+        alert('Não há itens registrados para exportar.');
+        return;
+      }
+      // Agrupa por segurança caso tenham desmarcado a opção de somar em algum momento
+      const consolidado = {};
+      itensColetados.slice().reverse().forEach(item => {
+        consolidado[item.codigo] = (consolidado[item.codigo] || 0) + item.quantidade;
+      });
+
+      const linhas = Object.entries(consolidado).map(([cod, qtd]) => `${cod};${formatarQtdHiper(qtd)}`);
+      const conteudo = '\uFEFF' + linhas.join('\r\n') + '\r\n';
+      baixarArquivo(conteudo, `03_Estoque_Coletado_Hiper_${dataHoraArquivo()}.csv`);
+    }
+
+    // Exportação 2: Planilha completa com cabeçalho para conferência em Excel
+    function exportarCSVAuditoria() {
+      if (itensColetados.length === 0) {
+        alert('Não há itens registrados para exportar.');
+        return;
+      }
+      const cabecalho = 'codigo_de_barras;nome_produto;unidade;quantidade;hora_coleta';
+      const linhas = itensColetados.slice().reverse().map(i => {
+        const infoCat = catalogoProdutos[i.codigo];
+        const nome = (infoCat ? infoCat.nome : i.nome).replace(/;/g, ' ');
+        const und = infoCat ? infoCat.und : i.unidade;
+        return `${i.codigo};${nome};${und};${formatarQtdHiper(i.quantidade)};${i.timestamp}`;
+      });
+      const conteudo = '\uFEFF' + [cabecalho, ...linhas].join('\r\n') + '\r\n';
+      baixarArquivo(conteudo, `Auditoria_Contagem_Parafusao_${dataHoraArquivo()}.csv`);
+    }
+
+    function baixarArquivo(conteudo, nomeArquivo) {
+      const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nomeArquivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function dataHoraArquivo() {
+      const d = new Date();
+      return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // Inicializar tabela ao abrir
+    renderizarTabela();
+  </script>
+</body>
+
+</html>
